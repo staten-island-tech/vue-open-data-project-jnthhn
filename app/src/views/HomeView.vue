@@ -1,7 +1,6 @@
 <template>
   <div>
     <h1>Arrest Information</h1>
-    <!-- Check if there are any arrests and loop through them -->
     <div v-if="arrest_key.length">
       <div v-for="(arrest, index) in arrest_key" :key="arrest.arrest_key">
         <p><strong>Arrest Key:</strong> {{ arrest.arrest_key }}</p>
@@ -23,7 +22,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-
+import { Bar } from 'vue-chartjs'
 const arrest_key = ref([])
 
 async function getArrest() {
@@ -37,6 +36,4 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
-/* Add some basic styling here */
-</style>
+<style scoped></style>
