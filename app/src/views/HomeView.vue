@@ -3,12 +3,12 @@
     <h1>Arrest Information</h1>
     <div v-if="arrest_key.length">
       <div v-for="(arrest, index) in arrest_key" :key="arrest.arrest_key">
-        <p><strong>Arrest Key:</strong> {{ arrest.arrest_key }}</p>
-        <p><strong>Arrest Date:</strong> {{ arrest.arrest_date }}</p>
-        <p><strong>PD Description:</strong> {{ arrest.pd_desc }}</p>
-        <p><strong>OFNS Description:</strong> {{ arrest.ofns_desc }}</p>
+        <p>Arrest Key: {{ arrest.arrest_key }}</p>
+        <p>Arrest Date: {{ arrest.arrest_date }}</p>
+        <p>PD Description: {{ arrest.pd_desc }}</p>
+        <p>OFNS Description: {{ arrest.ofns_desc }}</p>
         <p>
-          <strong>Location (Latitude, Longitude):</strong> {{ arrest.latitude }},
+          Location (Latitude, Longitude): {{ arrest.latitude }},
           {{ arrest.longitude }}
         </p>
         <hr />
@@ -22,17 +22,59 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { Bar } from 'vue-chartjs'
-const arrest_key = ref([])
+import { Chart, registerables } from 'chart.js'
+
+Chart.register(...registerables)
+
+const arrestData = ref([])
+const chartCanvas = ref(null)
+let chartInstance = null
 
 async function getArrest() {
   let res = await fetch('https://data.cityofnewyork.us/resource/8h9b-rp9u.json')
   let data = await res.json()
-  arrest_key.value = data
+  arrestData.value = data
 }
 
 onMounted(() => {
   getArrest()
+})
+
+const createChart = () => {
+  if (!chartCanvas.value || !arrestData.value.length) return
+}
+
+const offenseCounts = arrestData.value.reduce((acc, arrest) => {
+  const offense = arrest.ofns_desc || 'Unknown'
+  acc[offense] = (acc[offense] || 0) + 1
+  return acc
+}, {})
+
+const labels = Object.keys(offenseCounts)
+const data = Object.values(offenseCounts)
+
+if (chartInstance) {
+  chartInstance.destroy()
+}
+
+chartInstance = new Chart(chartCanvas.value, {
+  type: 'bar',
+  data: {
+    labels,
+    datasets: [
+      {
+        label: 'Number of Arrests',
+        data,
+        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        borderColor: 'rgba(75, 192, 192, 1)',
+        borderWidth: 1,
+      },
+    ],
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+  },
 })
 </script>
 
