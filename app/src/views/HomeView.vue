@@ -7,10 +7,7 @@
         <p>Arrest Date: {{ arrest.arrest_date }}</p>
         <p>PD Description: {{ arrest.pd_desc }}</p>
         <p>OFNS Description: {{ arrest.ofns_desc }}</p>
-        <p>
-          Location (Latitude, Longitude): {{ arrest.latitude }},
-          {{ arrest.longitude }}
-        </p>
+        <p>Location (Latitude, Longitude): {{ arrest.latitude }}, {{ arrest.longitude }}</p>
         <hr />
       </div>
     </div>
@@ -18,75 +15,64 @@
       <p>Loading arrest data...</p>
     </div>
     <div>
-      <!-- Assign a ref to the canvas element -->
-      <canvas ref="chartCanvas"></canvas>
+      <MyChart :chartData="chartData" :chartOptions="chartOptions" />
     </div>
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted, watch } from 'vue'
-import { Chart, registerables } from 'chart.js'
+<script>
+import { ref, onMounted } from 'vue'
+import MyChart from './MyChart.vue'
 
-Chart.register(...registerables)
-
-const arrestData = ref([])
-const chartCanvas = ref(null)
-let chartInstance = null
-
-const getArrest = async () => {
-  try {
-    const res = await fetch('https://data.cityofnewyork.us/resource/8h9b-rp9u.json')
-    const data = await res.json()
-    arrestData.value = data
-  } catch (error) {
-    console.error('Error fetching arrest data:', error)
-  }
-}
-
-const createChart = () => {
-  if (!chartCanvas.value || !arrestData.value.length) return
-
-  const offenseCounts = arrestData.value.reduce((acc, arrest) => {
-    const offense = arrest.ofns_desc || 'Unknown'
-    acc[offense] = (acc[offense] || 0) + 1
-    return acc
-  }, {})
-
-  const labels = Object.keys(offenseCounts)
-  const data = Object.values(offenseCounts)
-
-  if (chartInstance) {
-    chartInstance.destroy()
-  }
-
-  chartInstance = new Chart(chartCanvas.value.getContext('2d'), {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [
-        {
-          label: 'Number of Arrests',
-          data,
-          backgroundColor: 'rgba(75, 192, 192, 0.2)',
-          borderColor: 'rgba(75, 192, 192, 1)',
-          borderWidth: 1,
-        },
-      ],
-    },
-    options: {
+export default {
+  components: { MyChart },
+  setup() {
+    const arrestData = ref([])
+    const chartData = ref(null)
+    const chartOptions = ref({
       responsive: true,
       maintainAspectRatio: false,
-    },
-  })
+    })
+
+    const getArrestData = async () => {
+      try {
+        const res = await fetch('https://data.cityofnewyork.us/resource/8h9b-rp9u.json')
+        const data = await res.json()
+        arrestData.value = data
+
+        // Prepare chart data
+        const offenseCounts = data.reduce((acc, arrest) => {
+          const offense = arrest.ofns_desc || 'Unknown'
+          acc[offense] = (acc[offense] || 0) + 1
+          return acc
+        }, {})
+
+        chartData.value = {
+          labels: Object.keys(offenseCounts),
+          datasets: [
+            {
+              label: 'Number of Arrests',
+              data: Object.values(offenseCounts),
+              backgroundColor: 'rgba(75, 192, 192, 0.2)',
+              borderColor: 'rgba(75, 192, 192, 1)',
+              borderWidth: 1,
+            },
+          ],
+        }
+      } catch (error) {
+        console.error('Error fetching arrest data:', error)
+      }
+    }
+
+    onMounted(() => {
+      getArrestData()
+    })
+
+    return {
+      arrestData,
+      chartData,
+      chartOptions,
+    }
+  },
 }
-
-onMounted(() => {
-  getArrest()
-})
-
-// Watch for changes in arrestData and create the chart when data is loaded
-watch(arrestData, () => {
-  createChart()
-})
 </script>
