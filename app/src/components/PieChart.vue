@@ -32,23 +32,10 @@ export default {
     function createChart() {
       if (!props.chartData) return
       chartInstance = new Chart(chartCanvas.value, {
-        type: 'bar',
+        type: 'pie',
         data: props.chartData,
         options: {
           responsive: true,
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: {
-                stepSize: 5,
-              },
-            },
-            x: {
-              ticks: {
-                autoSkip: false,
-              },
-            },
-          },
           plugins: {
             legend: {
               display: true,
@@ -66,9 +53,9 @@ export default {
 
 <style scoped>
 .chart-wrapper {
-  width: 90vw;
-  height: 80vh;
-  max-width: 1200px;
+  width: 60vw;
+  height: 60vh;
+  max-width: 600px;
   margin: auto;
   display: flex;
   align-items: center;
